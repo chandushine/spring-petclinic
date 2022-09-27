@@ -1,20 +1,4 @@
 pipeline {
-    agent any
-    stages ( "clone" ) {
-        steps {
-            https://github.com/chandushine/spring-petclinic.git
-        }
-    }
-    stages ( "build" ){
-        steps {
-            mvn package
-        }
-    }
-}
-        
-
-
-pipeline {
     agent { label 'hello_world' }
     stages {
         stage('clone') {
