@@ -1,3 +1,11 @@
-n
-
-
+node('hello_world') {
+    stage('clone') {
+        git branch: 'main', url: 'https://github.com/chandushine/spring-petclinic.git'k
+   }
+   stage('build') {
+       sh 'mvn package'
+   }
+    stage( 'reports' ) {
+       junit '**/target/surefire-reports/*.xml'
+    }
+}
