@@ -1,11 +1,49 @@
-node('hello_world') {
-    stage('clone') {
-        git branch: 'main', url: 'https://github.com/chandushine/spring-petclinic.git'k
-   }
-   stage('build') {
-       sh 'mvn package'
-   }
-    stage( 'reports' ) {
-       junit '**/target/surefire-reports/*.xml'
-    }
+pipeline {
+       agent { lable 'chandu' }
+       parameters { 
+           string(name: 'BUILD_ON', defaultValue: 'package', description: 'for build action') 
+           choice(name: 'BRANCH', choices: ['main', 'springboot3'], description: 'for selecting branch')
+                  }
+       triggers {
+           pollSCM('30 9 * * *')
+                }
+       stages {
+           stage ('clone') {
+            steps {
+              git url: 'https://github.com/spring-projects/spring-petclinic.git',
+              branch: "${params.BRANCH}"              
+                }   
+                           }
+           stage ('build') {
+            steps {
+              sh "${params.BUILD_ON}" 
+                 }       
+                           }
+           stage ('artifactory') {
+           steps {
+               rtServer (
+                    id: "",
+                    url: "https://qtdevopsoct22.jfrog.io/",
+                    credentialsId: "JFROG_ADMIN_ID"
+                )
+           }   
+           }                   
+      
+      post  {
+        always {
+            echo 'Job completed'
+            mail subject: 'result', 
+                    body: 'Build Completed', 
+                  to: 'chandushie70@gmail.com'
+        }
+        failure {
+            mail subject: 'Build Failed', 
+                  body: 'Build Failed', 
+                  to: 'chandushine70@gmail.com' 
+        }
+        success {
+            junit '**/surefire-reports/*.xml',
+            archive '**/target/*.jar'
+        }
+       }
 }
