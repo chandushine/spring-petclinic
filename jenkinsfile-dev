@@ -1,0 +1,20 @@
+pipeline {
+  agent { label 'nodejs' }
+   parameters { choice(name: 'BRANCH', choices: ['main', 'rel', 'dev'], description: 'for branches') 
+                string(name: 'BUILD_ON', defaultValue: 'package', description: 'for building')
+     }
+     triggers { pollSCM('* * * * *') }
+     stages {
+      stage ('vpc') {
+        steps {
+          git url:'https://github.com/chandushine/spring-petclinic.git',
+          branch:"${params.BRANCH}"
+        }
+      }
+      stage ('build') {
+        steps {
+          sh "${params.BUILD_ON}"
+        }
+      }
+     }
+}
