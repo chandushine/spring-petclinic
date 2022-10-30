@@ -3,7 +3,9 @@ pipeline {
    parameters { choice(name: 'BRANCH', choices: ['main', 'rel', 'dev'], description: 'for branches') 
                 string(name: 'BUILD_ON', defaultValue: 'package', description: 'for building')
      }
-     triggers { pollSCM('* * * * *') }
+     triggers {
+         pollSCM('* * * * *') 
+         }
      stages {
       stage ('vpc') {
         steps {
