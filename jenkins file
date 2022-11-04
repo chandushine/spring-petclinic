@@ -1,19 +1,50 @@
 pipeline {
-  agent { label 'nodejs' }
-   parameters { choice(name: 'BRANCH', choices: ['main', 'rel', 'dev'], description: 'for branches') 
-                string(name: 'BUILD_ON', defaultValue: 'package', description: 'for building')
-     }
-     stages {
-      stage ('vpc') {
-        steps {
-          git url:'https://github.com/chandushine/spring-petclinic.git',
-          branch:"${params.BRANCH}"
+    agent {label 'java11'}
+      stages {
+        stage (vcs) {
+           steps {
+                git branch:'main',url:'https://github.com/chandushine/spring-petclinic.git'
+           }
         }
-      }
-      stage ('build') {
-        steps {
-          sh "${params.BUILD_ON}"
+        stage (build) {
+            steps {
+               withSonarQubeEnv('chandu') {
+                 sh 'mvn clean package sonar:sonar'
+              }
+            }
         }
-      }
-     }
-}
+          stage ('mvn dpl') {
+            steps {
+               rtMavenDeployer (
+                    id: "MAVEN_DEPLOYER",
+                    serverId: "jfrog",
+                    releaseRepo: "prince-libs-release-local",
+                    snapshotRepo: "prince-libs-snapshot-local"
+               )
+                rtMavenRun (
+                    tool: "MAVEN", // Tool name from Jenkins configuration
+                    pom: "pom.xml",
+                    goals: "clean install",
+                    deployerId: "MAVEN_DEPLOYER"
+                )
+            }
+        }
+        stage ('Publish build info') {
+            steps {
+                rtPublishBuildInfo (
+                    serverId: "jfrog"
+                )
+            }
+        }
+        stage ('junit') {
+            steps {
+                 junit '**/surefire-reports/*.xml'
+            }
+        }
+        stage ('archive') {
+            steps {
+                archive '**/target/*.jar'
+            }
+        }
+    }
+    }
